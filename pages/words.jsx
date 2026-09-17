@@ -17,6 +17,7 @@ import {
   saveGeneratedSentences,
 } from "../lib/store"
 import { generateWord } from "../lib/api"
+import { pickLevel } from "../lib/difficulty"
 import { COLORS } from "../lib/ui"
 
 // 自信度 → 色（本家踏襲）
@@ -179,7 +180,7 @@ export default function Words() {
     const s = settings || (await getSettings())
     setGenningId(w.id)
     try {
-      const data = await generateWord({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, word: w.word, count: s.defaultCount || 3, difficulty: s.difficulty })
+      const data = await generateWord({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, word: w.word, count: s.defaultCount || 3, level: pickLevel(s) })
       await saveGeneratedSentences(w.id, data.sentences)
       const fixed = (data.corrected || "").trim()
       if (fixed && fixed.toLowerCase() !== w.word.trim().toLowerCase()) await updateWord(w.id, { word: fixed })

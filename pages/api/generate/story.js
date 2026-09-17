@@ -1,16 +1,14 @@
 // POST /api/generate/story
 // My長文（ユーザー投稿の文章）を並べ替え用の文リストに変換する（BYOK）。
-// Pochi-next の /api/story/generate を土台に、認証/プラン/Firestore を外し、
-// キーをリクエスト由来（BYOK）に、返却を { title, inputLang, sentences:[{en,ja}] } に統一。
-//   answer / chips / id / audio はクライアント側で付与する。
-//
 // en入力: 英文はサーバー側で文末記号で機械分割し、AIには和訳だけ出させる（出力トークン節約）。
-// ja入力: AIが英語生成＋文分割＋和訳をまとめて行う。
+//         和訳は「英文の雰囲気を反映した自然な日本語」で、レベル指定はしない。
+// ja入力: AIが英語生成＋文分割＋和訳をまとめて行う（英語レベルは設定に従う）。
 //
-// リクエストbody: { provider, apiKey, text, inputLang("en"|"ja"), title?, difficulty?, tone?, model? }
+// リクエストbody: { provider, apiKey, text, inputLang("en"|"ja"), title?, level?, model? }
+//   level = { levelMode, cefrLevel, grammarLevel }
 
 import { generateJSON } from "../../../lib/llm"
-import { getDifficulty, buildEnglishStyle } from "../../../lib/difficulty"
+import { buildLevelInstruction } from "../../../lib/difficulty"
 import { checkRateLimit } from "../../../lib/rateLimit"
 import { sendProviderError } from "../../../lib/apiError"
 
@@ -59,10 +57,11 @@ ${numbered}`
 }
 
 // ja入力: 英語生成＋分割＋和訳をまとめて行う最小プロンプト
-function buildJaGeneratePrompt(text, style) {
+function buildJaGeneratePrompt(text, levelLine) {
   return `次の日本語を英語に翻訳してください。
-スタイル: ${style}
-自然な英語で1文4〜12語程度に分け、各文に和訳をつけること。
+${levelLine}
+トーン（カジュアルさ・かしこまり具合）は文章の内容に合わせて自然にしてください。
+自然な長さ（長くても30語程度）で1文ずつに分け、各文に和訳をつけること。
 出力は次のJSON形式のみ（説明文なし）:
 {"sentences":[{"en":"…","ja":"…"}]}
 
@@ -83,7 +82,7 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: "rate_limited", detail: "アクセスが集中しています。少し時間をおいて、もう一度お試しください。" })
     }
 
-    const { provider, apiKey, text, inputLang, title, difficulty, tone, model } = req.body || {}
+    const { provider, apiKey, text, inputLang, title, level, model } = req.body || {}
     if (!PROVIDERS.includes(provider)) return res.status(400).json({ error: "invalid_provider" })
     if (!apiKey || !String(apiKey).trim()) return res.status(400).json({ error: "missing_api_key" })
     if (!text || !String(text).trim()) return res.status(400).json({ error: "empty_text" })
@@ -105,10 +104,10 @@ export default async function handler(req, res) {
     let sentences
     let usage = null
     if (inputLang === "en") {
-      // 英文は機械分割 → AIは和訳のみ
+      // 英文は機械分割 → AIは和訳のみ（レベル指定なし・英文の雰囲気を反映）
       const enList = splitEnglishSentences(text)
       if (enList.length === 0) return res.status(502).json({ error: "generation_failed" })
-      const jaNote = getDifficulty(difficulty).jaTranslationNote
+      const jaNote = "英文の雰囲気を反映した自然な日本語"
       const { json, usage: u } = await generateJSON({
         provider,
         apiKey,
@@ -120,13 +119,13 @@ export default async function handler(req, res) {
       const translations = Array.isArray(json?.translations) ? json.translations : []
       sentences = enList.map((en, i) => ({ en, ja: normalizeSentence(translations[i] || "") }))
     } else {
-      // 日本語 → 英語生成（AIが分割＋和訳もまとめて）
-      const style = buildEnglishStyle(difficulty, tone)
+      // 日本語 → 英語生成（AIが分割＋和訳もまとめて。英語レベルは設定に従う）
+      const levelLine = buildLevelInstruction(level)
       const { json, usage: u } = await generateJSON({
         provider,
         apiKey,
         model,
-        prompt: buildJaGeneratePrompt(text, style),
+        prompt: buildJaGeneratePrompt(text, levelLine),
         maxTokens: 1500,
       })
       usage = u

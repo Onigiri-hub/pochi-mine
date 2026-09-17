@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/router"
 import { getChat, saveChat, getSettings, getApiConfig } from "../lib/store"
 import { streamChat, translateSentence, wordMeaning, refineToEnglish } from "../lib/api"
+import { pickLevel } from "../lib/difficulty"
 import { splitSentences } from "../lib/sentence"
 import { preloadVoices, warmUpSpeech, playWebSpeech, playAllWebSpeech } from "../utils/ttsPlayer"
 import Navigation from "../components/Navigation"
@@ -82,8 +83,7 @@ export default function TalkRoom() {
           apiKey: cfg.apiKey,
           model: cfg.model,
           messages: updated.messages.map((m) => ({ role: m.role, content: m.content })),
-          difficulty: settings.difficulty,
-          tone: settings.tone,
+          level: pickLevel(settings),
         },
         (_chunk, whole) => setStreamingText(whole)
       )

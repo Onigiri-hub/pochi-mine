@@ -3,11 +3,12 @@
 // 返すのは { word, sentences:[{en,ja}] } の最小形。
 //   answer / chips / id / audio はクライアント側で付与する（データ設計どおり）。
 //
-// リクエストbody: { provider, apiKey, word, count(1〜4), difficulty?, model? }
+// リクエストbody: { provider, apiKey, word, count(1〜4), level?, model? }
+//   level = { levelMode, cefrLevel, grammarLevel }（生成英語のレベル）
 //   ※ apiKey は保存もログもしない。生成のたびに受け取り、使い捨てる。
 
 import { generateJSON } from "../../../lib/llm"
-import { getDifficulty } from "../../../lib/difficulty"
+import { buildLevelInstruction } from "../../../lib/difficulty"
 import { checkRateLimit } from "../../../lib/rateLimit"
 import { sendProviderError } from "../../../lib/apiError"
 
@@ -17,12 +18,13 @@ function normalizeSentence(s) {
   return (s || "").replace(/\s+/g, " ").trim()
 }
 
-function buildWordPrompt(word, count, difficulty) {
-  const level = getDifficulty(difficulty).instruction
+function buildWordPrompt(word, count, level) {
+  const levelLine = buildLevelInstruction(level)
   return `次の英単語について、自然な例文を${count}個つくってください。
 もしスペルに誤りがあれば正しい単語に直し、その正しい単語を "word" に入れてください（正しければそのまま返す）。
-レベル: ${level}
-各例文は4〜12語程度の自然な英文にし、必ずその正しい単語を含めること。
+${levelLine}
+トーン（カジュアルさ・かしこまり具合）は、その単語の性質や自然な使われ方に合わせてください。
+各例文は自然な長さ（長くても30語程度）にし、必ずその正しい単語を含めること。
 各英文に、自然な日本語訳をつけること。
 出力は次のJSON形式のみ（説明文なし）:
 {"word":"正しいスペルの単語","sentences":[{"en":"…","ja":"…"}]}
@@ -42,7 +44,7 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: "rate_limited", detail: "アクセスが集中しています。少し時間をおいて、もう一度お試しください。" })
     }
 
-    const { provider, apiKey, word, count, difficulty, model } = req.body || {}
+    const { provider, apiKey, word, count, level, model } = req.body || {}
     if (!PROVIDERS.includes(provider)) return res.status(400).json({ error: "invalid_provider" })
     if (!apiKey || !String(apiKey).trim()) return res.status(400).json({ error: "missing_api_key" })
     if (!word || !String(word).trim()) return res.status(400).json({ error: "empty_word" })
@@ -54,7 +56,7 @@ export default async function handler(req, res) {
       provider,
       apiKey,
       model,
-      prompt: buildWordPrompt(w, n, difficulty),
+      prompt: buildWordPrompt(w, n, level),
       maxTokens: 900,
     })
 

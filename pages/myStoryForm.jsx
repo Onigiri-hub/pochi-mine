@@ -1,15 +1,15 @@
 // My長文の作成フォーム。BYOKプロキシで生成 → IndexedDBに保存 → 再生画面へ。
-// 入力言語のズレ確認モーダルは Pochi-next から流用。
+// 英語レベルは設定画面で一元管理（ここでは選ばない）。トーンは内容に合わせて自動。
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Navigation from "../components/Navigation"
 import ErrorNotice from "../components/ErrorNotice"
 import { getSettings, addStory } from "../lib/store"
 import { generateStory } from "../lib/api"
+import { pickLevel } from "../lib/difficulty"
 import { preloadVoices, warmUpSpeech } from "../utils/ttsPlayer"
 import { COLORS, primaryBtn, segBtn } from "../lib/ui"
 
-// 入力言語とモードのズレを判定（en=英語モードに和字混入 / ja=日本語モードに英語優勢 / null=OK）
 function langWarning(text, inputLang) {
   const t = text || ""
   const ja = (t.match(/[぀-ゟ゠-ヿ一-鿿]/g) || []).length
@@ -29,21 +29,15 @@ export default function MyStoryForm() {
   const [text, setText] = useState("")
   const [inputLang, setInputLang] = useState("en")
   const [title, setTitle] = useState("")
-  const [difficulty, setDifficulty] = useState("everyday")
-  const [tone, setTone] = useState("normal")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [showLangModal, setShowLangModal] = useState(false)
 
   useEffect(() => {
     preloadVoices()
-    getSettings().then((s) => {
-      setSettings(s)
-      setDifficulty(s.difficulty || "everyday")
-    })
+    getSettings().then(setSettings)
   }, [])
 
-  // 上限（プロキシ側 MAX_EN_WORDS=300 / MAX_JA_CHARS=1000 に合わせる）
   const limit = inputLang === "en" ? { unit: "語", max: 300 } : { unit: "字", max: 1000 }
   const count = inputLang === "en" ? (text.trim() ? text.trim().split(/\s+/).length : 0) : text.trim().length
   const over = count > limit.max
@@ -67,7 +61,7 @@ export default function MyStoryForm() {
       setError(err)
       return
     }
-    warmUpSpeech() // iOSのジェスチャ要件を満たすため await より前に
+    warmUpSpeech()
     setShowLangModal(false)
     setLoading(true)
     setError("")
@@ -79,11 +73,10 @@ export default function MyStoryForm() {
         text,
         inputLang,
         title,
-        difficulty,
-        tone,
+        level: pickLevel(settings),
       })
       const story = await addStory({
-        title: (title || "").trim() || (inputLang === "en" ? "My長文" : "My長文"),
+        title: (title || "").trim() || "My長文",
         inputLang: data.inputLang || inputLang,
         pairs: data.sentences,
       })
@@ -105,8 +98,6 @@ export default function MyStoryForm() {
     )
   }
 
-  const labelStyle = { fontSize: "13px", fontWeight: "bold", color: COLORS.sub, marginBottom: "6px" }
-
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, paddingBottom: "110px" }}>
       <div style={{ padding: "10px 20px" }}>
@@ -120,7 +111,6 @@ export default function MyStoryForm() {
       </div>
 
       <div style={{ maxWidth: "420px", margin: "0 auto", padding: "0 20px", display: "flex", flexDirection: "column", gap: "16px" }}>
-        {/* 言語選択 */}
         <div style={{ display: "flex", gap: "8px" }}>
           {[["en", "英語で入力"], ["ja", "日本語で入力"]].map(([val, lbl]) => (
             <button key={val} onClick={() => setInputLang(val)} style={segBtn(inputLang === val)}>
@@ -129,7 +119,6 @@ export default function MyStoryForm() {
           ))}
         </div>
 
-        {/* タイトル */}
         <input
           type="text"
           value={title}
@@ -138,7 +127,6 @@ export default function MyStoryForm() {
           style={{ padding: "12px", borderRadius: "10px", border: `1px solid ${COLORS.line}`, fontSize: "15px" }}
         />
 
-        {/* 本文 */}
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -150,29 +138,11 @@ export default function MyStoryForm() {
           {count} / {limit.max}{limit.unit}
         </div>
 
-        {/* 難易度 */}
-        <div>
-          <div style={labelStyle}>英語のレベル</div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            {[["everyday", "日常会話"], ["business", "ビジネス"]].map(([val, lbl]) => (
-              <button key={val} onClick={() => setDifficulty(val)} style={segBtn(difficulty === val)}>
-                {lbl}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* トーン（日本語入力＝英語生成のときだけ） */}
         {inputLang === "ja" && (
-          <div>
-            <div style={labelStyle}>話し方（カジュアルさ）</div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              {[["normal", "ノーマル ◎"], ["casual", "カジュアル"]].map(([val, lbl]) => (
-                <button key={val} onClick={() => setTone(val)} style={segBtn(tone === val)}>
-                  {lbl}
-                </button>
-              ))}
-            </div>
+          <div style={{ fontSize: "12px", color: COLORS.muted }}>
+            英語のレベルは
+            <button onClick={() => router.push("/settings")} style={{ background: "none", border: "none", color: COLORS.primary, fontWeight: "bold", cursor: "pointer", padding: 0, textDecoration: "underline" }}>設定</button>
+            で変更できます。
           </div>
         )}
 
@@ -187,7 +157,6 @@ export default function MyStoryForm() {
         </button>
       </div>
 
-      {/* 入力言語ズレの確認モーダル */}
       {showLangModal && (
         <div onClick={() => setShowLangModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", zIndex: 1000 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: "16px", padding: "24px 20px", maxWidth: "340px", width: "100%", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }}>

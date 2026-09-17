@@ -6,6 +6,7 @@ import Navigation from "../components/Navigation"
 import { getSettings, saveSettings, getMonthUsage } from "../lib/store"
 import { generateWord } from "../lib/api"
 import { COLORS, segBtn } from "../lib/ui"
+import { CEFR_LEVELS, CEFR_ORDER, GRAMMAR_LEVELS, GRAMMAR_ORDER, pickLevel } from "../lib/difficulty"
 
 const PROVIDERS = [
   { id: "gemini", label: "Gemini", hint: "Google AI Studio（無料枠大・試しやすい）" },
@@ -15,6 +16,17 @@ const PROVIDERS = [
 
 const LABEL = { fontSize: "13px", fontWeight: "bold", color: COLORS.sub, marginBottom: "6px" }
 const INPUT = { width: "100%", padding: "12px", borderRadius: "10px", border: `1px solid ${COLORS.line}`, fontSize: "15px", boxSizing: "border-box" }
+
+function levelRow(active) {
+  return {
+    display: "flex", flexDirection: "column", gap: "2px", alignItems: "flex-start", textAlign: "left",
+    width: "100%", padding: "10px 12px", borderRadius: "10px", cursor: "pointer",
+    border: active ? "2px solid " + COLORS.primary : "1px solid " + COLORS.line,
+    background: active ? COLORS.primarySoft : "#fff",
+  }
+}
+const levelCode = { fontSize: "14px", fontWeight: "bold", color: COLORS.text }
+const levelDesc = { fontSize: "12px", color: COLORS.sub, lineHeight: 1.5 }
 
 // クリックで開閉するカテゴリ見出し（タイトル中央・下線は section_underbar.png）
 function Section({ title, note, open, onToggle }) {
@@ -52,7 +64,9 @@ export default function Settings() {
   const [provider, setProvider] = useState("gemini")
   const [apiKey, setApiKey] = useState("")
   const [defaultCount, setDefaultCount] = useState(3)
-  const [difficulty, setDifficulty] = useState("everyday")
+  const [levelMode, setLevelMode] = useState("cefr")
+  const [cefrLevel, setCefrLevel] = useState("A1")
+  const [grammarLevel, setGrammarLevel] = useState(1)
   const [dailyTokenLimit, setDailyTokenLimit] = useState(0)
   const [dailyRequestLimit, setDailyRequestLimit] = useState(0)
   const [monthlyTokenLimit, setMonthlyTokenLimit] = useState(0)
@@ -68,7 +82,9 @@ export default function Settings() {
       if (s.provider) setProvider(s.provider)
       setApiKey(s.apiKey || "")
       setDefaultCount(s.defaultCount || 3)
-      setDifficulty(s.difficulty || "everyday")
+      setLevelMode(s.levelMode || "cefr")
+      setCefrLevel(s.cefrLevel || "A1")
+      setGrammarLevel(s.grammarLevel || 1)
       setDailyTokenLimit(s.dailyTokenLimit || 0)
       setDailyRequestLimit(s.dailyRequestLimit || 0)
       setMonthlyTokenLimit(s.monthlyTokenLimit || 0)
@@ -82,7 +98,9 @@ export default function Settings() {
       provider,
       apiKey: apiKey.trim(),
       defaultCount,
-      difficulty,
+      levelMode,
+      cefrLevel,
+      grammarLevel,
       dailyTokenLimit: Number(dailyTokenLimit) || 0,
       dailyRequestLimit: Number(dailyRequestLimit) || 0,
       monthlyTokenLimit: Number(monthlyTokenLimit) || 0,
@@ -92,7 +110,9 @@ export default function Settings() {
   const pickProvider = (id) => { setProvider(id); persist({ provider: id }) }
   const changeKey = (v) => { setApiKey(v); persist({ apiKey: v.trim() }) }
   const pickCount = (n) => { setDefaultCount(n); persist({ defaultCount: n }) }
-  const pickDiff = (v) => { setDifficulty(v); persist({ difficulty: v }) }
+  const pickMode = (m) => { setLevelMode(m); persist({ levelMode: m }) }
+  const pickCefr = (v) => { setCefrLevel(v); persist({ cefrLevel: v }) }
+  const pickGrammar = (n) => { setGrammarLevel(n); persist({ grammarLevel: n }) }
   const changeDailyToken = (v) => { setDailyTokenLimit(v); persist({ dailyTokenLimit: Number(v) || 0 }) }
   const changeDailyReq = (v) => { setDailyRequestLimit(v); persist({ dailyRequestLimit: Number(v) || 0 }) }
   const changeMonthly = (v) => { setMonthlyTokenLimit(v); persist({ monthlyTokenLimit: Number(v) || 0 }) }
@@ -101,7 +121,7 @@ export default function Settings() {
     setTesting(true)
     setTestResult(null)
     try {
-      const data = await generateWord({ provider, apiKey: apiKey.trim(), word: "test", count: 1, difficulty })
+      const data = await generateWord({ provider, apiKey: apiKey.trim(), word: "test", count: 1, level: pickLevel({ levelMode, cefrLevel, grammarLevel }) })
       const ok = Array.isArray(data?.sentences) && data.sentences.length > 0
       setTestResult({ ok, message: ok ? `疎通OK（例: ${data.sentences[0].en}）` : "応答は来ましたが例文が空でした" })
     } catch (e) {
@@ -231,15 +251,31 @@ export default function Settings() {
         {open.gen && (
           <div>
             <div style={LABEL}>生成する英語のレベル</div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              {[["everyday", "日常会話"], ["business", "ビジネス"]].map(([val, lbl]) => (
-                <button key={val} onClick={() => pickDiff(val)} style={segBtn(difficulty === val)}>
-                  {lbl}
-                </button>
-              ))}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+              <button onClick={() => pickMode("cefr")} style={segBtn(levelMode === "cefr")}>CEFRで選ぶ</button>
+              <button onClick={() => pickMode("grammar")} style={segBtn(levelMode === "grammar")}>文法で選ぶ</button>
             </div>
-            <div style={{ fontSize: "12px", color: COLORS.muted, marginTop: "6px" }}>
-              並べて英単語・My長文など、AIが英文を作るとき全体に反映されます。
+            {levelMode === "cefr" ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {CEFR_ORDER.map((code) => (
+                  <button key={code} onClick={() => pickCefr(code)} style={levelRow(cefrLevel === code)}>
+                    <span style={levelCode}>{code}</span>
+                    <span style={levelDesc}>{CEFR_LEVELS[code].label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {GRAMMAR_ORDER.map((n) => (
+                  <button key={n} onClick={() => pickGrammar(n)} style={levelRow(grammarLevel === n)}>
+                    <span style={levelCode}>レベル{n}</span>
+                    <span style={levelDesc}>{GRAMMAR_LEVELS[n].label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div style={{ fontSize: "12px", color: COLORS.muted, marginTop: "8px" }}>
+              並べて英単語・My長文・TALKなど、AIが英語を作るとき全体に反映されます。
             </div>
           </div>
         )}

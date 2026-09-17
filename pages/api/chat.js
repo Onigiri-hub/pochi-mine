@@ -1,12 +1,13 @@
 // POST /api/chat（ストリーミング）
-// ユーザーは主に日本語で話しかける → AIは短くやさしい英語で返す（BYOK）。
+// ユーザーは主に日本語で話しかける → AIは英語で返す（英語レベルは設定に従う・BYOK）。
 // 返答はテキストとして逐次ストリームする。末尾に使用トークンをマーカー付きで載せる。
 // キーは保存もログもしない。
 //
-// リクエストbody: { provider, apiKey, model?, messages:[{role,content}], difficulty?, tone? }
+// リクエストbody: { provider, apiKey, model?, messages:[{role,content}], level? }
+//   level = { levelMode, cefrLevel, grammarLevel }
 
 import { streamChat } from "../../lib/llm"
-import { buildEnglishStyle } from "../../lib/difficulty"
+import { buildLevelInstruction } from "../../lib/difficulty"
 import { checkRateLimit } from "../../lib/rateLimit"
 import { sendProviderError } from "../../lib/apiError"
 
@@ -15,16 +16,17 @@ const MAX_MESSAGES = 24 // 直近だけ送る（コンテキスト肥大＝ト�
 // ストリーム末尾に使用トークンを載せるための区切り（英語の返答本文には現れない）
 export const USAGE_MARKER = "\n[[USAGE]]"
 
-function buildSystem(difficulty, tone) {
-  const style = buildEnglishStyle(difficulty, tone)
-  return `You are Pochi, a warm and friendly English conversation partner for a Japanese person who is a beginner at English.
+function buildSystem(level) {
+  const levelLine = buildLevelInstruction(level)
+  return `You are Pochi, a warm and friendly English conversation partner for a Japanese learner.
 The user will usually write in Japanese. Understand it, and keep a natural, friendly conversation going.
 Rules:
 - Reply in English only. Never write Japanese.
-- Keep it simple and short: 1 to 3 short sentences, each about 6 to 12 words.
-- Always end your reply with one easy question to keep the conversation going.
+- Keep replies conversational: 1 to 3 sentences. Keep each sentence natural (at most about 30 words).
+- Match your tone to the user's message (be casual if they are casual, polite if they are polite).
+- Always end your reply with one question to keep the conversation going.
 - Do not correct the user's mistakes. Just chat warmly and encourage them.
-- Style: ${style}`
+English level guidance for your vocabulary and grammar (in Japanese): ${levelLine}`
 }
 
 export default async function handler(req, res) {
@@ -38,7 +40,7 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: "rate_limited", detail: "アクセスが集中しています。少し時間をおいて、もう一度お試しください。" })
     }
 
-    const { provider, apiKey, model, messages, difficulty, tone } = req.body || {}
+    const { provider, apiKey, model, messages, level } = req.body || {}
     if (!PROVIDERS.includes(provider)) return res.status(400).json({ error: "invalid_provider" })
     if (!apiKey || !String(apiKey).trim()) return res.status(400).json({ error: "missing_api_key" })
     if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ error: "empty_messages" })
@@ -61,7 +63,7 @@ export default async function handler(req, res) {
       provider,
       apiKey,
       model,
-      system: buildSystem(difficulty, tone),
+      system: buildSystem(level),
       messages: trimmed,
       maxTokens: 400,
       onDelta: (t) => {
