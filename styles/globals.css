@@ -1,0 +1,13 @@
+/* 全ページ共通の下地。アプリのコンテナ(#ebebeb)とページの地を揃え、
+   400px中央寄せの要素の外側に白いスキマが出ないようにする。 */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #ebebeb;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
