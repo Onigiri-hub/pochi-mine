@@ -148,7 +148,23 @@ devで全ページ200コンパイル確認。
 
 ---
 
+## 配布前整備＋PWA/エラー整備（2026-09-17・developブランチ）
+
+git導入済み（`git init -b main`→初回コミット→**develop**で作業。デプロイは従来通りCLI直で、GitHub連携なし）。
+
+**A. CSP＋規約（commit `7de78bd`・本番デプロイ済み dpl_FxveCw558t1uKeLtMunFNECyCmN1）**
+- **CSP＋セキュリティヘッダ（実用版）:** `next.config.mjs`の`headers()`で全ルートに付与。狙いは`connect-src 'self'`＝万一XSSが起きてもAPIキーを外部送信できないようにする。script-src/style-srcは`'unsafe-inline'`許容（pages routerのインラインscript＋styled-jsx）。dev時のみ`'unsafe-eval'`（Turbopack HMR用・本番は無し）。＋`X-Content-Type-Options`/`Referrer-Policy`/`X-Frame-Options DENY`/`Permissions-Policy`。本番起動＋headless CDPでCSP違反0・描画正常を検証済み。ソースに`dangerouslySetInnerHTML`/`eval`無し＝注入口ほぼ無し。厳格版(nonce)は将来サードパーティscript/HTML描画を足したら検討。
+- **規約ページ:** `pages/terms.jsx`（「規約とポリシー」＝本家terms.jsxの見た目踏襲、利用規約9条＋プライバシー7条をBYOK/ローカル保存に合わせて改変）。設定画面の一番下にリンク。⚠️**運営者名`ミエリカ・ワークス`＋連絡先`mierika.works@gmail.com`は雛形＝配布名義に合わせ要編集**（terms.jsxの`OPERATOR`/`CONTACT`）。
+- **AI送信注意書き:** TALK空状態＋単語登録フォームに追加（myStoryFormと統一）。
+
+**B. ②エラー種別で出し分け＋①PWA化（本番デプロイは未）**
+- **②エラー出し分け:** `lib/errorMessage.js`の`describeError(e)`で invalid_key/content_blocked/rate_limited/unavailable/server_error＋**オフライン/通信断(codeなし)** を判別し `{title,message,action}` を返す（サーバーの日本語detailは尊重、invalid_key系は「設定を開く」導線つき）。共通表示 `components/ErrorNotice.jsx`。words(alert()廃止→genError)/myStoryForm/talkRoom の主要生成導線に適用。APIキー未設定の`confirm()`も missing_api_key Error に統一。
+- **①PWA化:** `public/manifest.webmanifest`（standalone/theme #e8963c/bg #ebebeb）＋`public/icons/`（pochi.pngからsharpで192/512/maskable512/apple-touch180生成）＋`_app.js`にHead(manifest/theme-color/apple-touch)＋SW登録（**本番のみ**・`document.readyState==='complete'`なら即登録＝load後マウントのレース対策）。`public/sw.js`＝軽量自作SW（/api/*は常時ネット・静的アセットcache-first・ナビはnetwork-firstでオフライン時キャッシュ）。CSP `default-src 'self'`と相性OK。headless検証: SW active/manifest有効/theme-color/CSP違反0を確認。**next-pwa不使用**（Turbopack相性回避）。
+
+---
+
 ## 未実装（次の候補）
+- **③ 英文生成レベルのCEFR細分化（設計保留中）**：CEFR6段階案が有力だが未確定。`lib/difficulty.js`の2段階(everyday/business)を拡張予定。実装は未着手（ユーザーが設計検討中）。
 
 - talk会話一覧の行デザインをmyStory式（丸アイコン＋⋯メニュー）に ※削除モーダル化は済、行の丸アイコン化は未
 - 本番の生成UX（今は未生成行の暫定「生成」ボタン）※ユーザー判断で「やらない確定」

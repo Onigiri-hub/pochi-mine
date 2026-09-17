@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Navigation from "../components/Navigation"
+import ErrorNotice from "../components/ErrorNotice"
 import { getSettings, addStory } from "../lib/store"
 import { generateStory } from "../lib/api"
 import { preloadVoices, warmUpSpeech } from "../utils/ttsPlayer"
@@ -61,7 +62,9 @@ export default function MyStoryForm() {
     if (!text.trim() || loading || over) return
     if (!settings?.provider || !settings?.apiKey) {
       setShowLangModal(false)
-      if (confirm("APIキーが未設定です。設定画面へ移動しますか？")) router.push("/settings")
+      const err = new Error("長文の生成にはAPIキーが必要です。設定画面で登録してください。")
+      err.code = "missing_api_key"
+      setError(err)
       return
     }
     warmUpSpeech() // iOSのジェスチャ要件を満たすため await より前に
@@ -86,7 +89,7 @@ export default function MyStoryForm() {
       })
       router.push(`/storyPlay?id=${story.id}`)
     } catch (e) {
-      setError(e?.message || "生成に失敗しました。もう一度お試しください。")
+      setError(e)
     } finally {
       setLoading(false)
     }
@@ -173,7 +176,7 @@ export default function MyStoryForm() {
           </div>
         )}
 
-        {error && <div style={{ color: COLORS.danger, fontSize: "14px", textAlign: "center" }}>{error}</div>}
+        {error && <ErrorNotice error={error} />}
 
         <div style={{ fontSize: "12px", color: COLORS.muted, lineHeight: 1.6, background: "#f7f7f7", borderRadius: "8px", padding: "10px 12px" }}>
           この機能はあなたのAPIキーでAIに翻訳・問題生成を依頼します。入力内容はAIサービスに送信されます。個人情報や見られたくない文章は入力しないでください。

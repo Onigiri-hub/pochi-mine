@@ -1,0 +1,17 @@
+{
+  "name": "Pochi-Mine",
+  "short_name": "Pochi-Mine",
+  "description": "自分で登録した単語・My長文・AIとの会話で英語を練習できる学習アプリ",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ebebeb",
+  "theme_color": "#e8963c",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

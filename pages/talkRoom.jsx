@@ -7,7 +7,15 @@ import { streamChat, translateSentence, wordMeaning, refineToEnglish } from "../
 import { splitSentences } from "../lib/sentence"
 import { preloadVoices, warmUpSpeech, playWebSpeech, playAllWebSpeech } from "../utils/ttsPlayer"
 import Navigation from "../components/Navigation"
+import ErrorNotice from "../components/ErrorNotice"
 import { COLORS } from "../lib/ui"
+
+// APIキー未設定を表す Error（ErrorNotice が「設定を開く」導線を出す）。
+function missingKeyError(msg) {
+  const err = new Error(msg)
+  err.code = "missing_api_key"
+  return err
+}
 
 export default function TalkRoom() {
   const router = useRouter()
@@ -53,7 +61,7 @@ export default function TalkRoom() {
 
     const cfg = await getApiConfig()
     if (!cfg.provider || !cfg.apiKey) {
-      if (confirm("APIキーが未設定です。設定画面へ移動しますか？")) router.push("/settings")
+      setError(missingKeyError("AIと話すにはAPIキーが必要です。設定画面で登録してください。"))
       return
     }
     const settings = await getSettings()
@@ -86,7 +94,7 @@ export default function TalkRoom() {
       const parts = splitSentences(full)
       if (parts.length) playAllWebSpeech(parts)
     } catch (e) {
-      setError(e?.message || "エラーが発生しました")
+      setError(e)
     } finally {
       setStreaming(false)
       setStreamingText("")
@@ -99,7 +107,7 @@ export default function TalkRoom() {
     if (msg?.tr && msg.tr[sentenceIdx] !== undefined) return
     const cfg = await getApiConfig()
     if (!cfg.provider || !cfg.apiKey) {
-      setError("和訳にはAPIキーが必要です。設定で登録してね。")
+      setError(missingKeyError("和訳にはAPIキーが必要です。設定画面で登録してください。"))
       return
     }
     try {
@@ -124,7 +132,7 @@ export default function TalkRoom() {
     if (msg?.en !== undefined) return
     const cfg = await getApiConfig()
     if (!cfg.provider || !cfg.apiKey) {
-      setError("英語変換にはAPIキーが必要です。設定で登録してね。")
+      setError(missingKeyError("英語変換にはAPIキーが必要です。設定画面で登録してください。"))
       return
     }
     try {
@@ -196,7 +204,7 @@ export default function TalkRoom() {
 
         {streaming && <AiBubble message={{ content: streamingText }} live />}
 
-        {error && <div style={{ color: COLORS.danger, fontSize: "13px", textAlign: "center" }}>{error}</div>}
+        {error && <ErrorNotice error={error} compact />}
       </div>
 
       <div style={{ padding: "10px 12px", background: "transparent", display: "flex", gap: "8px", alignItems: "flex-end" }}>

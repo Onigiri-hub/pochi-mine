@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/router"
 import Navigation from "../components/Navigation"
+import ErrorNotice from "../components/ErrorNotice"
 import {
   listWords,
   addWord,
@@ -99,6 +100,7 @@ export default function Words() {
   const [editing, setEditing] = useState(null) // {id,value}
   const [confirmDelete, setConfirmDelete] = useState(null) // 削除確認中 {id,word}
   const [genningId, setGenningId] = useState(null)
+  const [genError, setGenError] = useState(null) // 生成失敗のエラー（Errorオブジェクト）
 
   // 出題・並べ替え
   const [popupWord, setPopupWord] = useState(null)
@@ -166,9 +168,12 @@ export default function Words() {
 
   // --- 単語1つを生成（1単語=1リクエスト。一括生成はあえて設けない）---
   async function genOne(w) {
+    setGenError(null)
     const cfg = await getApiConfig()
     if (!cfg.provider || !cfg.apiKey) {
-      if (confirm("APIキーが未設定です。設定画面へ移動しますか？")) router.push("/settings")
+      const err = new Error("AI生成にはAPIキーが必要です。設定画面で登録してください。")
+      err.code = "missing_api_key"
+      setGenError(err)
       return
     }
     const s = settings || (await getSettings())
@@ -180,7 +185,7 @@ export default function Words() {
       if (fixed && fixed.toLowerCase() !== w.word.trim().toLowerCase()) await updateWord(w.id, { word: fixed })
       await reload()
     } catch (e) {
-      alert(e?.message || "生成に失敗しました")
+      setGenError(e)
     } finally {
       setGenningId(null)
     }
@@ -324,6 +329,13 @@ export default function Words() {
             <div style={{ fontSize: "11px", color: COLORS.muted, marginTop: "6px", lineHeight: 1.6 }}>
               ※「生成」するとあなたのAPIキーでAIに例文作成を依頼し、単語がAIサービスに送信されます。
             </div>
+          </div>
+        )}
+
+        {/* 生成エラー（種別で出し分け・invalid_keyは設定導線つき） */}
+        {genError && (
+          <div style={{ marginBottom: "10px" }}>
+            <ErrorNotice error={genError} />
           </div>
         )}
 
