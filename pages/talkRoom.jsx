@@ -174,6 +174,9 @@ export default function TalkRoom() {
         {chat.messages.length === 0 && !streaming && (
           <div style={{ textAlign: "center", color: COLORS.muted, fontSize: "13px", marginTop: "20px", lineHeight: 1.8 }}>
             日本語でOK！<br />「今日は疲れたよ」みたいに話しかけてみよう。
+            <div style={{ fontSize: "11px", marginTop: "16px", lineHeight: 1.7 }}>
+              ※メッセージはあなたのAPIキーでAIに送信されます。<br />個人情報や見られたくない内容は入力しないでください。
+            </div>
           </div>
         )}
 

@@ -251,6 +251,16 @@ export default function Settings() {
         >
           📦 データの移行・バックアップ
         </button>
+
+        {/* 規約とポリシー */}
+        <div style={{ textAlign: "center", marginTop: "18px", marginBottom: "4px" }}>
+          <button
+            onClick={() => router.push("/terms")}
+            style={{ background: "none", border: "none", color: COLORS.muted, fontSize: "13px", textDecoration: "underline", cursor: "pointer" }}
+          >
+            規約とポリシー
+          </button>
+        </div>
       </div>
 
       <Navigation />

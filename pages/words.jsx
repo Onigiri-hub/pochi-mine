@@ -321,6 +321,9 @@ export default function Words() {
               <button onClick={add} disabled={!input.trim()} style={{ padding: "0 18px", borderRadius: "10px", border: "none", background: input.trim() ? COLORS.text : "#ccc", color: "#fff", fontWeight: "bold", cursor: input.trim() ? "pointer" : "default" }}>追加</button>
             </div>
             <div style={{ fontSize: "11px", color: COLORS.muted, marginTop: "8px" }}>登録後、未生成の単語は「生成」で例文を作れます。</div>
+            <div style={{ fontSize: "11px", color: COLORS.muted, marginTop: "6px", lineHeight: 1.6 }}>
+              ※「生成」するとあなたのAPIキーでAIに例文作成を依頼し、単語がAIサービスに送信されます。
+            </div>
           </div>
         )}
 
