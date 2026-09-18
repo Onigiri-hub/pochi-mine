@@ -72,6 +72,9 @@ function sortAlphabetically(list) {
 function sortByCreated(list) {
   return [...list].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
 }
+function sortByCreatedDesc(list) {
+  return [...list].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+}
 
 const toolBtnStyle = {
   padding: "6px 12px",
@@ -202,6 +205,7 @@ export default function Words() {
   // --- 並べ替え（タップ→オレンジで押した感→0.5秒後に閉じる）---
   function applySort(key) {
     if (key === "created") setWords(sortByCreated(words))
+    else if (key === "created_desc") setWords(sortByCreatedDesc(words))
     else if (key === "alpha") setWords(sortAlphabetically(words))
     else if (key === "priority") setWords(sortByPriority(words, orderRef.current))
     setSortFlash(key)
@@ -385,6 +389,7 @@ export default function Words() {
         <Overlay onClose={() => setShowSortMenu(false)}>
           <div style={{ fontWeight: "bold", fontSize: "17px", marginBottom: "16px", textAlign: "center" }}>並べ替え</div>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <button onClick={() => applySort("created_desc")} style={confBtnStyle(sortFlash === "created_desc" ? COLORS.primary : COLORS.text)}>登録日順（新しい順）</button>
             <button onClick={() => applySort("created")} style={confBtnStyle(sortFlash === "created" ? COLORS.primary : COLORS.text)}>登録日順（古い順）</button>
             <button onClick={() => applySort("alpha")} style={confBtnStyle(sortFlash === "alpha" ? COLORS.primary : COLORS.text)}>アルファベット順</button>
             <button onClick={() => applySort("priority")} style={confBtnStyle(sortFlash === "priority" ? COLORS.primary : COLORS.text)}>優先順位の設定どおり</button>
