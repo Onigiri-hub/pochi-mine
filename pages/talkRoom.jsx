@@ -102,6 +102,13 @@ export default function TalkRoom() {
     }
   }
 
+  // 直近の会話を {role,content} 配列で返す（翻訳の文脈用）。endIdxInclusive まで最大count件。
+  function recentContext(endIdxInclusive, count) {
+    const end = endIdxInclusive + 1
+    const start = Math.max(0, end - count)
+    return chat.messages.slice(start, end).map((m) => ({ role: m.role, content: m.content }))
+  }
+
   // 文の和訳を取得（キャッシュ済みならそれを返す）。message.tr[sentenceIdx] に保存。
   async function translateFor(messageIdx, sentenceIdx, en) {
     const msg = chat.messages[messageIdx]
@@ -112,7 +119,9 @@ export default function TalkRoom() {
       return
     }
     try {
-      const { ja } = await translateSentence({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, en })
+      // 対象AI発話（他の文もニュアンスに効く）＋その前の会話を文脈として渡す
+      const context = recentContext(messageIdx, 6)
+      const { ja } = await translateSentence({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, en, context })
       const newMessages = chat.messages.map((m, i) =>
         i === messageIdx ? { ...m, tr: { ...(m.tr || {}), [sentenceIdx]: ja } } : m
       )
@@ -137,7 +146,9 @@ export default function TalkRoom() {
       return
     }
     try {
-      const { en } = await refineToEnglish({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, text })
+      // 対象ユーザー発話より前の会話を文脈として渡す（省略された主語の補完に効く）
+      const context = recentContext(messageIdx - 1, 6)
+      const { en } = await refineToEnglish({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, text, context })
       const newMessages = chat.messages.map((m, i) => (i === messageIdx ? { ...m, en } : m))
       const updated = { ...chat, messages: newMessages }
       setChat(updated)
