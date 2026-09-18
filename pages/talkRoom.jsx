@@ -172,13 +172,13 @@ export default function TalkRoom() {
   }
 
   return (
-    <div style={{ height: "100vh", maxWidth: "400px", margin: "0 auto", background: COLORS.bg, display: "flex", flexDirection: "column", paddingBottom: "60px", boxSizing: "border-box" }}>
+    <div style={{ height: "100dvh", maxWidth: "400px", margin: "0 auto", background: COLORS.bg, display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
       <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: "10px", background: "#fff", borderBottom: `1px solid ${COLORS.line}` }}>
         <button onClick={() => router.push("/talk")} style={{ background: "none", border: "none", fontSize: "16px", fontWeight: "bold", color: COLORS.text, cursor: "pointer" }}>◀</button>
         <div style={{ fontSize: "15px", fontWeight: "bold", color: COLORS.text }}>{chat.title || "おしゃべり"}</div>
       </div>
 
-      <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "132px", display: "flex", flexDirection: "column", gap: "12px" }}>
         {chat.messages.length === 0 && !streaming && (
           <div style={{ textAlign: "center", color: COLORS.muted, fontSize: "13px", marginTop: "20px", lineHeight: 1.8 }}>
             日本語でOK！<br />「今日は疲れたよ」みたいに話しかけてみよう。
@@ -207,7 +207,7 @@ export default function TalkRoom() {
         {error && <ErrorNotice error={error} compact />}
       </div>
 
-      <div style={{ padding: "10px 12px", background: "transparent", display: "flex", gap: "8px", alignItems: "flex-end" }}>
+      <div style={{ position: "fixed", bottom: "60px", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: "400px", boxSizing: "border-box", zIndex: 999, padding: "10px 12px", background: COLORS.bg, display: "flex", gap: "8px", alignItems: "flex-end" }}>
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
