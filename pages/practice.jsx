@@ -3,7 +3,8 @@
 // 効果音: チップ=pa.mp3 / 正解=seikai.mp3。見た目は本家（灰チップ・点線box・下部バー）。
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/router"
-import { getWord, getSentencesByWord, updateWord } from "../lib/store"
+import { getWord, getSentencesByWord, updateWord, getApiConfig } from "../lib/store"
+import { wordMeaning } from "../lib/api"
 import { checkAnswer, shuffle, toChipTokens } from "../lib/practice"
 import { preloadVoices, warmUpSpeech, playWebSpeech } from "../utils/ttsPlayer"
 import CompleteScreen from "../components/CompleteScreen"
@@ -20,9 +21,13 @@ export default function Practice() {
   const [placed, setPlaced] = useState([])
   const [status, setStatus] = useState("playing") // playing | correct | wrong
   const [finished, setFinished] = useState(false)
+  const [popup, setPopup] = useState(null) // { word, meaning?, loading?, error? }
 
   const paRef = useRef(null)
   const seikaiRef = useRef(null)
+  const wordCacheRef = useRef(new Map()) // 単語意味の一時キャッシュ（セッション内）
+  const pressTimerRef = useRef(null) // 長押し判定タイマー
+  const pressFiredRef = useRef(false) // 長押しが発火したか（直後のclickを無視するため）
 
   useEffect(() => {
     preloadVoices()
@@ -99,6 +104,48 @@ export default function Practice() {
     setPool((p) => [...p, chip])
     setStatus("playing")
   }
+  // --- チップ長押しで意味ポップアップ ---
+  function pressStart(chip) {
+    pressFiredRef.current = false
+    clearTimeout(pressTimerRef.current)
+    pressTimerRef.current = setTimeout(() => {
+      pressFiredRef.current = true
+      lookupWord(chip.token)
+    }, 500)
+  }
+  function pressEnd() {
+    clearTimeout(pressTimerRef.current)
+  }
+  // 長押しが発火していたら直後のclick（pick/unpick）は無視する
+  function chipTap(chip, tapFn) {
+    if (pressFiredRef.current) {
+      pressFiredRef.current = false
+      return
+    }
+    tapFn(chip)
+  }
+  async function lookupWord(rawWord) {
+    const word = rawWord.replace(/^[^A-Za-z']+|[^A-Za-z']+$/g, "") || rawWord
+    const key = word.toLowerCase()
+    if (wordCacheRef.current.has(key)) {
+      setPopup({ word, meaning: wordCacheRef.current.get(key) })
+      return
+    }
+    setPopup({ word, loading: true })
+    const cfg = await getApiConfig()
+    if (!cfg.provider || !cfg.apiKey) {
+      setPopup({ word, error: "APIキーが未設定です。設定画面で登録してください。" })
+      return
+    }
+    try {
+      const { meaning } = await wordMeaning({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, word, sentence: cur.en })
+      wordCacheRef.current.set(key, meaning)
+      setPopup({ word, meaning })
+    } catch (e) {
+      setPopup({ word, error: e?.message || "取得に失敗しました" })
+    }
+  }
+
   function check() {
     const assembled = placed.map((c) => c.token).join(" ")
     if (checkAnswer(assembled, cur.answer)) {
@@ -158,16 +205,23 @@ export default function Practice() {
       {/* 解答エリア */}
       <div className="chipBox">
         {placed.map((c) => (
-          <button key={c.id} className="chip" onClick={() => unpick(c)}>{c.token}</button>
+          <button key={c.id} className="chip"
+            onPointerDown={() => pressStart(c)} onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={() => chipTap(c, unpick)}>{c.token}</button>
         ))}
       </div>
 
       {/* チップ供給 */}
       <div style={{ textAlign: "center" }}>
         {pool.map((c) => (
-          <button key={c.id} className="chip" onClick={() => pick(c)}>{c.token}</button>
+          <button key={c.id} className="chip"
+            onPointerDown={() => pressStart(c)} onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={() => chipTap(c, pick)}>{c.token}</button>
         ))}
       </div>
+      <div style={{ textAlign: "center", fontSize: "11px", color: "#aaa", marginTop: "6px" }}>単語を長押しすると意味を確認できます</div>
 
       {/* 下部バー */}
       <div className={`bottomArea ${status !== "playing" ? status : ""}`}>
@@ -183,6 +237,22 @@ export default function Practice() {
       </div>
 
       <Navigation />
+
+      {/* 単語意味ポップアップ（チップ長押し） */}
+      {popup && (
+        <div onClick={() => setPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 1100 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: "16px 16px 0 0", padding: "18px 20px 26px", width: "100%", maxWidth: "480px", boxShadow: "0 -4px 20px rgba(0,0,0,0.15)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "18px", fontWeight: "bold", color: "#333" }}>{popup.word}</span>
+              <button onClick={() => playWebSpeech(popup.word)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0 0", opacity: 0.7 }} aria-label="読み上げ"><img src="/images/icons/speaker-333.svg" alt="読み上げ" style={{ width: "18px", height: "18px", display: "block" }} /></button>
+              <button onClick={() => setPopup(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#999", fontSize: "20px", cursor: "pointer" }}>×</button>
+            </div>
+            <div style={{ fontSize: "15px", color: popup.error ? COLORS.danger : "#333", lineHeight: 1.6 }}>
+              {popup.loading ? "調べています…" : popup.error ? popup.error : popup.meaning}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .app {
