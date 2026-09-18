@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/router"
 import { getChat, saveChat, getSettings, getApiConfig } from "../lib/store"
 import { streamChat, translateSentence, wordMeaning, refineToEnglish } from "../lib/api"
+import { lookupDictionary } from "../lib/dictionary"
 import { pickLevel } from "../lib/difficulty"
 import { splitSentences } from "../lib/sentence"
 import { preloadVoices, warmUpSpeech, playWebSpeech, playAllWebSpeech } from "../utils/ttsPlayer"
@@ -153,10 +154,19 @@ export default function TalkRoom() {
   async function lookupWord(word, sentence) {
     const key = word.toLowerCase()
     if (wordCacheRef.current.has(key)) {
-      setPopup({ word, meaning: wordCacheRef.current.get(key) })
+      setPopup({ word, ...wordCacheRef.current.get(key) })
       return
     }
     setPopup({ word, loading: true })
+    // ① まずローカル辞書（ヒットすればAPIを叩かない）
+    const dictJa = await lookupDictionary(word)
+    if (dictJa) {
+      const entry = { meaning: dictJa, source: "dict" }
+      wordCacheRef.current.set(key, entry)
+      setPopup({ word, ...entry })
+      return
+    }
+    // ② 辞書に無ければAPI（文脈依存）
     const cfg = await getApiConfig()
     if (!cfg.provider || !cfg.apiKey) {
       setPopup({ word, error: "APIキーが未設定です" })
@@ -164,8 +174,9 @@ export default function TalkRoom() {
     }
     try {
       const { meaning } = await wordMeaning({ provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, word, sentence })
-      wordCacheRef.current.set(key, meaning)
-      setPopup({ word, meaning })
+      const entry = { meaning, source: "ai" }
+      wordCacheRef.current.set(key, entry)
+      setPopup({ word, ...entry })
     } catch (e) {
       setPopup({ word, error: e?.message || "取得に失敗しました" })
     }
@@ -244,6 +255,9 @@ export default function TalkRoom() {
             <div style={{ fontSize: "15px", color: popup.error ? COLORS.danger : COLORS.text, lineHeight: 1.6 }}>
               {popup.loading ? "調べています…" : popup.error ? popup.error : popup.meaning}
             </div>
+            {!popup.loading && !popup.error && popup.source && (
+              <div style={{ fontSize: "10px", color: "#bbb", marginTop: "8px", textAlign: "right" }}>{popup.source === "dict" ? "辞書" : "AI"}</div>
+            )}
           </div>
         </div>
       )}
