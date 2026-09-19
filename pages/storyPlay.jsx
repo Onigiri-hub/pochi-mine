@@ -291,7 +291,6 @@ export default function StoryPlay() {
             onClick={() => chipTap(c, pick)}>{c.token}</button>
         ))}
       </div>
-      <div style={{ textAlign: "center", fontSize: "11px", color: "#aaa", marginTop: "6px" }}>単語を長押しすると意味を確認できます</div>
 
       {/* 下部バー */}
       <div className={`bottomArea ${status !== "playing" ? status : ""}`}>
