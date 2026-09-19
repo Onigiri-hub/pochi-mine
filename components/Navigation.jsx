@@ -4,7 +4,7 @@ import { useRouter } from "next/router"
 const TABS = [
   { href: "/", label: "HOME", icon: "/images/icons/home_fff.svg", alt: "ホーム", match: [] },
   { href: "/words", label: "WORDS", icon: "/images/icons/honekko_fff.svg", alt: "並べて英単語", match: ["/practice"] },
-  { href: "/myStory", label: "READING", icon: "/images/icons/book_fff.svg", alt: "My長文", match: ["/myStoryForm", "/storyPlay"] },
+  { href: "/myStory", label: "READING", icon: "/images/icons/book_fff.svg", alt: "MY長文", match: ["/myStoryForm", "/storyPlay"] },
   { href: "/talk", label: "TALK", icon: "/images/icons/talk_fff.svg", alt: "AIとおはなし", match: ["/talkRoom"] },
   { href: "/settings", label: "SETTINGS", icon: "/images/icons/settings_fff.svg", alt: "設定", match: ["/backup"] },
 ]

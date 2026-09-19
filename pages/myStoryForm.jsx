@@ -1,4 +1,4 @@
-// My長文の作成フォーム。BYOKプロキシで生成 → IndexedDBに保存 → 再生画面へ。
+// MY長文の作成フォーム。BYOKプロキシで生成 → IndexedDBに保存 → 再生画面へ。
 // 英語レベルは設定画面で一元管理（ここでは選ばない）。トーンは内容に合わせて自動。
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
@@ -76,7 +76,7 @@ export default function MyStoryForm() {
         level: pickLevel(settings),
       })
       const story = await addStory({
-        title: (title || "").trim() || "My長文",
+        title: (title || "").trim() || "MY長文",
         inputLang: data.inputLang || inputLang,
         pairs: data.sentences,
       })
@@ -107,7 +107,7 @@ export default function MyStoryForm() {
       </div>
 
       <div style={{ textAlign: "center", fontSize: "20px", fontWeight: "bold", color: COLORS.text, margin: "6px 0 24px" }}>
-        My長文を作る
+        MY長文を作る
       </div>
 
       <div style={{ maxWidth: "420px", margin: "0 auto", padding: "0 20px", display: "flex", flexDirection: "column", gap: "16px" }}>

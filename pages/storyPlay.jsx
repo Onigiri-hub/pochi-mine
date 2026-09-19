@@ -1,4 +1,4 @@
-// My長文の再生。プレビュー（英文/和訳トグル＋全文リスニング）→ 並べ替え → 完了。
+// MY長文の再生。プレビュー（英文/和訳トグル＋全文リスニング）→ 並べ替え → 完了。
 // 並べ替えは「並べて英単語」のレッスン画面(practice.jsx)と同じ見た目・効果音・挙動に統一。
 // 出題時に英語を一度だけ自動再生（リスニング先行）／解答後の読み上げは無し。
 import { useEffect, useRef, useState } from "react"
@@ -115,7 +115,7 @@ export default function StoryPlay() {
         </div>
 
         <div style={{ textAlign: "center", fontSize: "20px", fontWeight: "bold", color: COLORS.text, margin: "8px 0 26px" }}>
-          {story.title || "My長文"}
+          {story.title || "MY長文"}
           <span onClick={toggleListen} style={{ marginLeft: "10px", cursor: "pointer", display: "inline-flex", verticalAlign: "middle", opacity: 0.75 }} aria-label="全文を再生">
             {listening ? <span style={{ fontSize: "18px" }}>⏸</span> : <img src="/images/icons/speaker-333.svg" alt="全文を再生" style={{ width: "20px", height: "20px", verticalAlign: "middle" }} />}
           </span>

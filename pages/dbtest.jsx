@@ -38,7 +38,7 @@ export default function DbTest() {
       append("\n④ 単語一覧（generated が true になっているか）…")
       append(await listWords())
 
-      append("\n⑤ My長文を保存…")
+      append("\n⑤ MY長文を保存…")
       const st = await addStory({
         title: "海に行った",
         inputLang: "ja",

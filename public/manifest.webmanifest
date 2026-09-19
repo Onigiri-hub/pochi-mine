@@ -1,7 +1,7 @@
 {
   "name": "Pochi-Mine",
   "short_name": "Pochi-Mine",
-  "description": "自分で登録した単語・My長文・AIとの会話で英語を練習できる学習アプリ",
+  "description": "自分で登録した単語・MY長文・AIとの会話で英語を練習できる学習アプリ",
   "lang": "ja",
   "start_url": "/",
   "scope": "/",

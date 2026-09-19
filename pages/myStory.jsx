@@ -1,4 +1,4 @@
-// My長文の一覧。Pochi-next の myStoryList（レッスン一覧の見た目）に寄せた。
+// MY長文の一覧。Pochi-next の myStoryList（レッスン一覧の見た目）に寄せた。
 // イラスト背景ヘッダー ＋ 丸アイコンの lessonRow ＋ ⋯メニュー（改名/削除モーダル）＋ 下部の作成ボタン。
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
@@ -50,7 +50,7 @@ export default function MyStory() {
           ◀
         </button>
         <div style={{ textAlign: "center", paddingTop: "2px" }}>
-          <div style={{ fontWeight: "bold", fontSize: "18px", color: "#333333" }}>My長文</div>
+          <div style={{ fontWeight: "bold", fontSize: "18px", color: "#333333" }}>MY長文</div>
           <img src="/images/illustrations/section_underbar.png" alt="" style={{ display: "block", width: "100%", height: "auto", margin: "2px auto 0", pointerEvents: "none" }} />
         </div>
       </div>

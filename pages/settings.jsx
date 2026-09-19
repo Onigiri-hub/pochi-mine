@@ -275,7 +275,7 @@ export default function Settings() {
               </div>
             )}
             <div style={{ fontSize: "12px", color: COLORS.muted, marginTop: "8px" }}>
-              並べて英単語・My長文・TALKなど、AIが英語を作るとき全体に反映されます。
+              並べて英単語・MY長文・TALKなど、AIが英語を作るとき全体に反映されます。
             </div>
           </div>
         )}

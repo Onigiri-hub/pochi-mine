@@ -7,7 +7,7 @@ import { getApiConfig } from "../lib/store"
 
 const BUTTONS = [
   { href: "/words", img: "/images/illustrations/pochi_vocabulary.png", alt: "並べて英単語" },
-  { href: "/myStory", img: "/images/illustrations/pochi_chobun.png", alt: "My長文" },
+  { href: "/myStory", img: "/images/illustrations/pochi_chobun.png", alt: "MY長文" },
   { href: "/talk", img: "/images/illustrations/pochi_talk.png", alt: "AIとはなそう" },
 ]
 
