@@ -59,7 +59,7 @@ export default function Help() {
 
         <h2 style={section}>難易度設定について</h2>
         <p style={body}>
-          設定画面から、生成される英文の難易度を設定できます。CEFR（ヨーロッパ言語共通参照枠）または文法を参考に難易度を指定できます。ただし、英文の自然さを優先するため、指定した難易度の範囲を超えることもあります。なお、人によりますが、難易度maxで英文生成をすると一文がとても長く複雑になるので、並べ替え問題がすごいことになります。
+          設定画面から、生成される英文の難易度を設定できます。CEFR（ヨーロッパ言語共通参照枠）または文法を参考に難易度を指定できます。ただし、英文の自然さを優先するため、指定した難易度の範囲を超えることもあります。なお、難易度maxで英文生成をすると一文がとても長く複雑になるので、並べ替え問題がすごいことになります。
         </p>
 
         <h2 style={section}>推奨ブラウザについて</h2>
@@ -96,6 +96,15 @@ export default function Help() {
         <p style={body}>
           【きままにTALK】ユーザーがコメントを入力してAIがコメントを生成したとき。▼ボタンを押して訳を見るとき。
         </p>
+        {/* 規約とポリシーへの導線 */}
+        <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "4px" }}>
+          <button
+            onClick={() => router.push("/terms")}
+            style={{ background: "none", border: "none", color: COLORS.muted, fontSize: "13px", textDecoration: "underline", cursor: "pointer" }}
+          >
+            規約とポリシー
+          </button>
+        </div>
       </div>
 
       <Navigation />
