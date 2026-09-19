@@ -38,7 +38,7 @@ export default function MyStoryForm() {
     getSettings().then(setSettings)
   }, [])
 
-  const limit = inputLang === "en" ? { unit: "語", max: 300 } : { unit: "字", max: 1000 }
+  const limit = inputLang === "en" ? { unit: "語", max: 300 } : { unit: "字", max: 500 }
   const count = inputLang === "en" ? (text.trim() ? text.trim().split(/\s+/).length : 0) : text.trim().length
   const over = count > limit.max
   const langWarn = langWarning(text, inputLang)

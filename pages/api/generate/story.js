@@ -15,7 +15,7 @@ import { sendProviderError } from "../../../lib/apiError"
 const PROVIDERS = ["claude", "openai", "gemini"]
 // プロキシの計算枠を守るための上限（BYOKなのでPochi-nextの無料枠より緩め）。
 const MAX_EN_WORDS = 300
-const MAX_JA_CHARS = 1000
+const MAX_JA_CHARS = 500
 
 function normalizeSentence(s) {
   return (s || "").replace(/\s+/g, " ").trim()

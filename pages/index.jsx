@@ -78,6 +78,10 @@ export default function Home() {
             />
           ))}
         </div>
+
+        <div className="homeManual" onClick={() => router.push("/help")}>
+          Pochi-Mineのトリセツはこちら
+        </div>
       </div>
 
       <Navigation />
@@ -136,6 +140,18 @@ export default function Home() {
         }
         .homeBtnImg:active {
           transform: scale(0.95);
+        }
+        .homeManual {
+          text-align: center;
+          font-size: 14px;
+          font-weight: bold;
+          color: #e8963c;
+          text-decoration: underline;
+          margin-top: 28px;
+          cursor: pointer;
+        }
+        .homeManual:active {
+          opacity: 0.6;
         }
       `}</style>
     </div>
