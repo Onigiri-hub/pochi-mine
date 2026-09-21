@@ -196,10 +196,11 @@ export default function Words() {
   }
 
   // --- 自信度 ---
+  // ★その場更新のみ（並べ替えはしない）。並べ替えはユーザーが並べ替えボタンを押したときだけ。
   async function setConfidence(wordId, conf) {
     await updateWord(wordId, { confidence: conf })
     setPopupWord(null)
-    reload()
+    setWords((prev) => prev.map((w) => (w.id === wordId ? { ...w, confidence: conf } : w)))
   }
 
   // --- 並べ替え（タップ→オレンジで押した感→0.5秒後に閉じる）---
@@ -389,10 +390,10 @@ export default function Words() {
         <Overlay onClose={() => setShowSortMenu(false)}>
           <div style={{ fontWeight: "bold", fontSize: "17px", marginBottom: "16px", textAlign: "center" }}>並べ替え</div>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <button onClick={() => applySort("created_desc")} style={confBtnStyle(sortFlash === "created_desc" ? COLORS.primary : COLORS.text)}>登録日順（新しい順）</button>
-            <button onClick={() => applySort("created")} style={confBtnStyle(sortFlash === "created" ? COLORS.primary : COLORS.text)}>登録日順（古い順）</button>
-            <button onClick={() => applySort("alpha")} style={confBtnStyle(sortFlash === "alpha" ? COLORS.primary : COLORS.text)}>アルファベット順</button>
-            <button onClick={() => applySort("priority")} style={confBtnStyle(sortFlash === "priority" ? COLORS.primary : COLORS.text)}>優先順位の設定どおり</button>
+            <button onClick={() => applySort("created_desc")} style={confBtnStyle(sortFlash === "created_desc" ? COLORS.primary : "#02ccbb")}>登録日順（新しい順）</button>
+            <button onClick={() => applySort("created")} style={confBtnStyle(sortFlash === "created" ? COLORS.primary : "#02ccbb")}>登録日順（古い順）</button>
+            <button onClick={() => applySort("alpha")} style={confBtnStyle(sortFlash === "alpha" ? COLORS.primary : "#02ccbb")}>アルファベット順</button>
+            <button onClick={() => applySort("priority")} style={confBtnStyle(sortFlash === "priority" ? COLORS.primary : "#02ccbb")}>優先順位の設定どおり</button>
           </div>
         </Overlay>
       )}

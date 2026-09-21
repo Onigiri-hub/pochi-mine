@@ -14,6 +14,13 @@ const scriptSrc = isDev
   ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
   : "script-src 'self' 'unsafe-inline'"
 
+// 開発時のみ HMR の WebSocket を許可（Turbopack のホットリロード用）。
+// これが無いと connect-src 'self' に ws:// が弾かれ「compiling」表示が消え残ることがある。
+// 本番は 'self' のみ＝キーの外部送信を遮断したまま。
+const connectSrc = isDev
+  ? "connect-src 'self' ws: wss:"
+  : "connect-src 'self'"
+
 const csp = [
   "default-src 'self'",
   scriptSrc,
@@ -21,7 +28,7 @@ const csp = [
   "img-src 'self' data: blob:",
   "media-src 'self'",
   "font-src 'self'",
-  "connect-src 'self'",
+  connectSrc,
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
