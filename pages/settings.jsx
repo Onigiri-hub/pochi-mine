@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Navigation from "../components/Navigation"
+import BackupReminder from "../components/BackupReminder"
 import { getSettings, saveSettings, getMonthUsage } from "../lib/store"
 import { generateWord } from "../lib/api"
 import { COLORS, segBtn } from "../lib/ui"
@@ -300,6 +301,7 @@ export default function Settings() {
       </div>
 
       <Navigation />
+      <BackupReminder context="settings" />
     </div>
   )
 }

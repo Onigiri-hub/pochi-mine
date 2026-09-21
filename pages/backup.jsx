@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Navigation from "../components/Navigation"
 import { exportData, exportJSON, downloadBackup, copyBackupToClipboard, importData } from "../lib/backup"
+import { markBackupDone } from "../lib/backupReminder"
 import { COLORS, primaryBtn, segBtn } from "../lib/ui"
 
 export default function Backup() {
@@ -27,6 +28,7 @@ export default function Backup() {
     setFallbackText("")
     try {
       const len = await copyBackupToClipboard()
+      markBackupDone() // 促しポップアップの基準日時を更新
       setCopyMsg(`コピーしました（${len}文字）`)
     } catch {
       const json = await exportJSON()
@@ -37,6 +39,7 @@ export default function Backup() {
 
   async function doDownload() {
     await downloadBackup()
+    markBackupDone() // 促しポップアップの基準日時を更新
   }
 
   async function importFromFile(e) {
@@ -86,7 +89,7 @@ export default function Backup() {
 
         {/* エクスポート */}
         <div style={card}>
-          <div style={sectionTitle}>📤 書き出し（この端末 → 別端末へ）</div>
+          <div style={sectionTitle}>📤 書き出し・保存</div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={doDownload} style={{ ...primaryBtn(false), flex: 1, padding: "12px" }}>ファイルに保存</button>
             <button onClick={doCopy} style={{ ...segBtn(false), flex: 1, padding: "12px" }}>コピー</button>
@@ -106,7 +109,7 @@ export default function Backup() {
 
         {/* インポート */}
         <div style={card}>
-          <div style={sectionTitle}>📥 取り込み（別端末 → この端末へ）</div>
+          <div style={sectionTitle}>📥 データ読み込み</div>
 
           <label style={{ ...primaryBtn(false), display: "block", textAlign: "center", padding: "12px", background: COLORS.primary }}>
             ファイルを選ぶ
