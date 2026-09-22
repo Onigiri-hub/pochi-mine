@@ -4,6 +4,7 @@
 import { useRouter } from "next/router"
 import Navigation from "../components/Navigation"
 import { COLORS } from "../lib/ui"
+import { DEFAULT_MODELS } from "../lib/models"
 
 // 見出しスタイル（下書きHTMLの色分けを踏襲：一般=オレンジ / モード=青）
 const section = { fontSize: "17px", fontWeight: "bold", color: "#ff9600", marginTop: "36px", marginBottom: "8px" }
@@ -96,6 +97,17 @@ export default function Help() {
         <p style={body}>
           【きままにTALK】ユーザーがコメントを入力してAIがコメントを生成したとき。▼ボタンを押して訳を見るとき。
         </p>
+
+        <h2 style={section}>使用中のAIモデルについて</h2>
+        <p style={body}>
+          当アプリが現在使用しているAIモデルは以下の通りです。料金（100万トークンあたりの単価や無料枠の有無）は各AI提供サービスによって異なり、モデルによっても変わります。従量課金制のため、ご利用前に各サービスの料金ページで最新の単価をご確認いただくことをおすすめします。なお、使用モデルは品質・料金の状況に応じて予告なく変更されることがあります。
+        </p>
+        <ul style={{ ...body, paddingLeft: "1.2em" }}>
+          <li><strong>Gemini</strong>：{DEFAULT_MODELS.gemini}</li>
+          <li><strong>ChatGPT</strong>：{DEFAULT_MODELS.openai}</li>
+          <li><strong>Claude</strong>：{DEFAULT_MODELS.claude}</li>
+        </ul>
+
         {/* 規約とポリシーへの導線 */}
         <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "4px" }}>
           <button
