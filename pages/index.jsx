@@ -53,6 +53,8 @@ export default function Home() {
         <video
           ref={videoRef}
           src="/animations/wan.mp4"
+          poster="/images/illustrations/pochi_still.png"
+          preload="auto"
           muted
           playsInline
           className="homePochi"
