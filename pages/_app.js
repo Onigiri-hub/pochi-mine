@@ -1,6 +1,7 @@
 import "../styles/globals.css"
 import { useEffect } from "react"
 import Head from "next/head"
+import { Analytics } from "@vercel/analytics/next"
 import TokenMeter from "../components/TokenMeter"
 import BackupReminder from "../components/BackupReminder"
 
@@ -34,6 +35,7 @@ export default function App({ Component, pageProps }) {
       <Component {...pageProps} />
       <TokenMeter />
       <BackupReminder context="app" />
+      <Analytics />
     </>
   )
 }
